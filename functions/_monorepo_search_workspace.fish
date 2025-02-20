@@ -3,7 +3,11 @@ function _monorepo_search_workspace
     set -l safe_dir (string replace -a '/' '_' $PWD)
     set -l cache_dir /tmp/monorepo_cache/$safe_dir
     mkdir -p $cache_dir
-    set -l mod_time (stat -f %m .)
+    if test (uname) = Linux
+        set -f mod_time (stat --format=%Y .)
+    else
+        set -f mod_time (stat -f %m .)
+    end
     set -l cache_file "$cache_dir/$mod_time.json"
 
     if test -f $cache_file
