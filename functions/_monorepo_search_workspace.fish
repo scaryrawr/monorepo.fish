@@ -4,7 +4,10 @@ function _monorepo_search_workspace
         return $status
     end
 
-    set -f fzf_arguments --multi --ansi --preview="_monorepo_preview_package_path {}"
+    set -l temp_file (mktemp)
+    echo $packages > $temp_file
+
+    set -f fzf_arguments --multi --ansi --preview="_monorepo_preview_package_path {} $temp_file"
     set -f token (commandline --current-token)
 
     if test -n "$token"
@@ -19,4 +22,6 @@ function _monorepo_search_workspace
     end
 
     commandline --function repaint
+
+    rm $temp_file
 end
