@@ -1,13 +1,22 @@
 function _monorepo_search_workspace
-    set -f packages (_monorepo_get_workspace_packages)
-    if test $status -ne 0
-        return $status
+    # Setup cache directory and file based on current directory and its last modified time
+    set -l safe_dir (string replace -a '/' '_' $PWD)
+    set -l cache_dir /tmp/monorepo_cache/$safe_dir
+    mkdir -p $cache_dir
+    set -l mod_time (stat -f %m .)
+    set -l cache_file "$cache_dir/$mod_time.json"
+
+    if test -f $cache_file
+        set -f packages (cat $cache_file)
+    else
+        set -f packages (_monorepo_get_workspace_packages)
+        if test $status -ne 0
+            return $status
+        end
+        echo $packages >$cache_file
     end
 
-    set -l temp_file (mktemp)
-    echo $packages >$temp_file
-
-    set -f fzf_arguments --multi --ansi --preview="_monorepo_preview_package_path {} $temp_file"
+    set -f fzf_arguments --multi --ansi --preview="_monorepo_preview_package_path {} $cache_file"
     set -f token (commandline --current-token)
 
     if test -n "$token"
@@ -22,6 +31,4 @@ function _monorepo_search_workspace
     end
 
     commandline --function repaint
-
-    rm $temp_file
 end
