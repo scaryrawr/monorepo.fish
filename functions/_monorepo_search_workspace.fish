@@ -5,7 +5,7 @@ function _monorepo_search_workspace
     end
 
     set -l temp_file (mktemp)
-    echo $packages > $temp_file
+    echo $packages >$temp_file
 
     set -f fzf_arguments --multi --ansi --preview="_monorepo_preview_package_path {} $temp_file"
     set -f token (commandline --current-token)
@@ -16,7 +16,7 @@ function _monorepo_search_workspace
 
     set --prepend fzf_arguments --prompt="Workspace >"
 
-    set -f packages_selected (echo $packages | jq -r '.[].name' | _fzf_wrapper $fzf_arguments)
+    set -f packages_selected (echo $packages | jq -r '.[].name' | awk '!seen[$0]++' | _fzf_wrapper $fzf_arguments)
     if test $status -eq 0
         commandline --current-token --replace -- (string escape -- $packages_selected | string join ' ')
     end
