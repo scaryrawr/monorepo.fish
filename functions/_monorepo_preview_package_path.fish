@@ -1,6 +1,6 @@
 function _monorepo_preview_package_path
     if test -n "$argv[2]"
-        set -f packages (cat $argv[2] | jq -r '.')
+        set -f packages (cat "$argv[2]")
     else
         set -f packages (_monorepo_get_workspace_packages)
     end
