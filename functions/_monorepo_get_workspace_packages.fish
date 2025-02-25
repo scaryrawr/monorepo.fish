@@ -24,29 +24,26 @@ function _monorepo_get_workspace_packages
         return 0
     end
 
-    set -l packages_file (mktemp)
-
-    echo "[]" >$packages_file
+    mkdir -p "$cache_dir"
+    echo "[]" >$cache_file
 
     if test -f "./package.json"
         set -l yarn_packages (_monorepo_search_yarn_workspace)
-        echo $yarn_packages | jq -s '.[0] + .[1]' $packages_file - >$packages_file.tmp
-        mv $packages_file.tmp $packages_file
+        echo $yarn_packages | jq -s '.[0] + .[1]' $cache_file - >$cache_file.tmp
+        mv $cache_file.tmp $cache_file
     end
 
     if test -f "./Cargo.toml"
         set -l cargo_packages (_monorepo_search_cargo_workspace)
-        echo $cargo_packages | jq -s '.[0] + .[1]' $packages_file - >$packages_file.tmp
-        mv $packages_file.tmp $packages_file
+        echo $cargo_packages | jq -s '.[0] + .[1]' $cache_file - >$cache_file.tmp
+        mv $cache_file.tmp $cache_file
     end
 
-    if test (jq 'length' $packages_file) -eq 0
+    if test (jq 'length' $cache_file) -eq 0
         echo "No supported workspace configuration found."
-        rm $packages_file
+        rm $cache_file
         return 1
     end
 
-    mkdir -p "$cache_dir"
-    cat $packages_file | tee "$cache_file"
-    rm $packages_file
+    cat $cache_file
 end
