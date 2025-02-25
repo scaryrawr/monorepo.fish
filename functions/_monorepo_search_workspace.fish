@@ -10,7 +10,7 @@ function _monorepo_search_workspace
         set --prepend fzf_arguments --query "$token"
     end
 
-    set --prepend fzf_arguments --prompt="Workspace >"
+    set --prepend fzf_arguments --prompt="Workspace> "
 
     set -f packages_selected (echo $packages | jq -r '.[].name' | awk '!seen[$0]++' | _fzf_wrapper $fzf_arguments)
     if test $status -eq 0
