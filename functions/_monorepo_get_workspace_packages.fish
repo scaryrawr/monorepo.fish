@@ -4,11 +4,11 @@ function _monorepo_get_workspace_packages
     set -l cache_dir /tmp/monorepo_cache/$safe_dir
 
     if test -f "./package.json"
-        set -f pwd_hash (_monorepo_mtime_hash (git ls-files '*package.json'))
+        set -f pwd_hash (_monorepo_hash (git ls-files '*package.json'))
     end
 
     if test -f "./Cargo.toml"
-        set -f cargo_hash (_monorepo_mtime_hash (git ls-files '*Cargo.toml'))
+        set -f cargo_hash (_monorepo_hash (git ls-files '*Cargo.toml'))
         if test -n "$pwd_hash"
             set -f pwd_hash (string join - $pwd_hash $cargo_hash | sha256sum | awk '{print $1}')
         else
