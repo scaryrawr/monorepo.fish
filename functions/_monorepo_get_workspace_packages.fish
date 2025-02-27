@@ -10,7 +10,7 @@ function _monorepo_get_workspace_packages
     if test -f "./Cargo.toml"
         set -f cargo_hash (_monorepo_hash (git ls-files '*Cargo.toml'))
         if test -n "$pwd_hash"
-            set -f pwd_hash (string join - $pwd_hash $cargo_hash | sha256sum | awk '{print $1}')
+            set -f pwd_hash (string join - $pwd_hash $cargo_hash | sha256sum | cut -d' ' -f1)
         else
             set -f pwd_hash $cargo_hash
         end
