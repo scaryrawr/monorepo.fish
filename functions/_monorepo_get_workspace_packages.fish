@@ -1,7 +1,8 @@
+# Retrieves workspace packages from the monorepo, caching results to optimize repeated lookups.
 function _monorepo_get_workspace_packages
     # Create tmp cache directory based on current working directory
-    set -l safe_dir (string replace -a '/' '_' $PWD)
-    set -l cache_dir /tmp/monorepo_cache/$safe_dir
+    set -l safe_dir (string replace -a '/' '_' "$PWD")
+    set -l cache_dir "/tmp/monorepo_cache/$safe_dir"
 
     if test -f "./package.json"
         set -f pwd_hash (_monorepo_hash (git ls-files '*package.json'))
@@ -17,34 +18,38 @@ function _monorepo_get_workspace_packages
     end
 
     set -l cache_file "$cache_dir/$pwd_hash.json"
+    set -l temp_cache_file "$cache_file.tmp"
 
-    if test -f $cache_file && test (jq 'length' $cache_file) -ne 0
+    if test -f "$cache_file" && test (jq 'length' "$cache_file") -ne 0
         # Just use the cache file if it exists
-        cat $cache_file
+        cat "$cache_file"
         return 0
     end
 
-    # Otherwise, create the cache file
+    # Otherwise, create the temporary cache file
     mkdir -p "$cache_dir"
-    echo "[]" >$cache_file
+    echo "[]" >"$temp_cache_file"
 
     if test -f "./package.json"
         set -l yarn_packages (_monorepo_search_yarn_workspace)
-        echo $yarn_packages | jq -s '.[0] + .[1]' $cache_file - >$cache_file.tmp
-        mv $cache_file.tmp $cache_file
+        echo $yarn_packages | jq -s '.[0] + .[1]' "$temp_cache_file" - >"$temp_cache_file.tmp"
+        mv "$temp_cache_file.tmp" "$temp_cache_file"
     end
 
     if test -f "./Cargo.toml"
         set -l cargo_packages (_monorepo_search_cargo_workspace)
-        echo $cargo_packages | jq -s '.[0] + .[1]' $cache_file - >$cache_file.tmp
-        mv $cache_file.tmp $cache_file
+        echo $cargo_packages | jq -s '.[0] + .[1]' "$temp_cache_file" - >"$temp_cache_file.tmp"
+        mv "$temp_cache_file.tmp" "$temp_cache_file"
     end
 
-    if test (jq 'length' $cache_file) -eq 0
+    if test (jq 'length' "$temp_cache_file") -eq 0
         echo "No supported workspace configuration found."
-        rm $cache_file
+        rm "$temp_cache_file"
         return 1
     end
 
-    cat $cache_file
+    # Move the temporary cache file to the final cache file
+    mv "$temp_cache_file" "$cache_file"
+
+    cat "$cache_file"
 end

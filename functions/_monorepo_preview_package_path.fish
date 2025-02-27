@@ -1,3 +1,4 @@
+# Previews the path(s) of a workspace package and warns if multiple packages share the same name.
 function _monorepo_preview_package_path
     set -f packages (_monorepo_get_workspace_packages)
 
@@ -10,6 +11,6 @@ function _monorepo_preview_package_path
 
     for package_path in $package_paths
         echo $package_path
-        _fzf_preview_file $package_path
+        _fzf_preview_file "$package_path"
     end
 end
