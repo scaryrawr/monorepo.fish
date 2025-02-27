@@ -1,3 +1,4 @@
+# Provides an interactive interface to search for workspace packages via fzf.
 function _monorepo_search_workspace
     set -f packages (_monorepo_get_workspace_packages)
     if test $status -ne 0

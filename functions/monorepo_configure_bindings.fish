@@ -1,3 +1,4 @@
+# Configures key bindings for interactive workspace search in monorepo.fish.
 function monorepo_configure_bindings --description "Installs the default key bindings for monorepo.fish"
     status is-interactive; or return
 
