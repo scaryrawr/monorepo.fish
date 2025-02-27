@@ -18,12 +18,13 @@ function _monorepo_get_workspace_packages
 
     set -l cache_file "$cache_dir/$pwd_hash.json"
 
-    if test -f $cache_file
+    if test -f $cache_file && test (jq 'length' $cache_file) -ne 0
         # Just use the cache file if it exists
         cat $cache_file
         return 0
     end
 
+    # Otherwise, create the cache file
     mkdir -p "$cache_dir"
     echo "[]" >$cache_file
 
