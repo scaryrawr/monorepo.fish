@@ -13,7 +13,7 @@ function _monorepo_search_workspace
 
     set --prepend fzf_arguments --prompt="Workspace> "
 
-    set -f packages_selected (echo $packages | jq -r '.[].name' | awk '!seen[$0]++' | _fzf_wrapper $fzf_arguments)
+    set -f packages_selected (_monorepo_extract_package_names "$packages" | _fzf_wrapper $fzf_arguments)
     if test $status -eq 0
         commandline --current-token --replace -- (string escape -- $packages_selected | string join ' ')
     end
