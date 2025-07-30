@@ -84,9 +84,9 @@ function validate_file_location_logic
     set -l package_data "$argv[1]"
     set -l expected_count "$argv[2]"
     
-    # Extract all paths
+    # Extract all paths - Fish stores multi-line output as array elements
     set -l paths (echo "$package_data" | jq -r '.[].path')
-    set -l path_count (echo "$paths" | wc -l | tr -d ' ')
+    set -l path_count (count $paths)
     
     assert_equals "$expected_count" "$path_count" "Should extract correct number of paths"
     
