@@ -32,7 +32,9 @@ function _monorepo_get_workspace_packages
 
     if test -f "./package.json"
         set -l yarn_packages (_monorepo_search_yarn_workspace)
-        echo $yarn_packages | jq -s '.[0] + .[1]' "$temp_cache_file" - >"$temp_cache_file.tmp"
+        set -l pnpm_packages (_monorepo_search_pnpm_workspace)
+        set -l bun_packages (_monorepo_search_bun_workspace)
+        echo $yarn_packages $pnpm_packages $bun_packages | jq -s 'add' >"$temp_cache_file.tmp"
         mv "$temp_cache_file.tmp" "$temp_cache_file"
     end
 
@@ -50,6 +52,14 @@ function _monorepo_get_workspace_packages
 
     # Move the temporary cache file to the final cache file
     mv "$temp_cache_file" "$cache_file"
+
+    # Validate the final result before returning
+    set -l final_result (cat "$cache_file")
+    if not _monorepo_validate_packages "$final_result"
+        echo "Invalid workspace package data detected."
+        rm "$cache_file"
+        return 1
+    end
 
     cat "$cache_file"
 end
