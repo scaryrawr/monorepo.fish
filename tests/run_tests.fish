@@ -14,8 +14,8 @@ function run_single_test
     echo "Running $test_name"
     echo "========================================"
     
-    # Run the test in a subshell to isolate variables
-    fish -c "source '$test_file'"
+    # Run the test file directly
+    fish "$test_file"
     set -l test_result $status
     
     echo ""
@@ -26,6 +26,8 @@ end
 function main
     set -l target_test "$argv[1]"
     set -l total_failures 0
+    set -l script_dir (dirname (status -f))
+    set -l test_files "$script_dir/test_validation.fish" "$script_dir/test_real_implementation.fish" "$script_dir/test_workspace_detection.fish" "$script_dir/test_core_functions.fish"
     
     echo "Starting monorepo.fish test suite"
     echo ""
@@ -61,7 +63,8 @@ function main
     for test_file in $test_files
         if test -f "$test_file"
             run_single_test "$test_file"
-            if test $status -ne 0
+            set -l test_status $status
+            if test $test_status -ne 0
                 set total_failures (math $total_failures + 1)
             end
         else
