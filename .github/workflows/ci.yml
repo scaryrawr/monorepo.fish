@@ -17,12 +17,6 @@ jobs:
       - name: Install Fish shell
         uses: fish-shop/install-fish-shell@v2
 
-      - name: Install Pond plugin with Fisher
-        uses: fish-shop/install-plugin@v2
-        with:
-          plugin-manager: fisher
-          plugins: PatrickF1/fzf.fish
-
       - name: Install core dependencies
         run: sudo apt-get update && sudo apt-get install -y jq git
 
