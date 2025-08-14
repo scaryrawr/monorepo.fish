@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-full:
+    name: Test with all tools
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Fish shell
+        uses: fish-shop/install-fish-shell@v2
+
+      - name: Install core dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq git
+
+      - name: Install Node.js for yarn/pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install yarn and pnpm
+        run: |
+          npm install -g yarn
+          npm install -g pnpm
+
+      - name: Install yq (for pnpm fallback testing)
+        run: sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq
+
+      - name: Verify tool installations
+        run: |
+          echo "=== Installed Tools ==="
+          fish --version
+          jq --version
+          git --version
+          node --version
+          yarn --version
+          pnpm --version
+          cargo --version || echo "cargo: not available"
+          rustc --version || echo "rustc: not available"
+          yq --version
+
+      - name: Run full test suite
+        run: fish tests/run_tests.fish
+
+  test-minimal:
+    name: Test with minimal tools (fallback testing)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Fish shell
+        uses: fish-shop/install-fish-shell@v2
+
+      - name: Install only core dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq git
+
+      - name: Verify minimal installation
+        run: |
+          echo "=== Available Tools ==="
+          fish --version
+          jq --version
+          git --version
+          echo "=== Checking for other tools ==="
+          command -v yarn || echo "yarn: not found (expected)"
+          command -v pnpm || echo "pnpm: not found (expected)"
+          command -v cargo || echo "cargo: not found (may be available by default)"
+          command -v yq || echo "yq: not found (expected)"
+
+      - name: Run test suite with fallbacks
+        run: fish tests/run_tests.fish

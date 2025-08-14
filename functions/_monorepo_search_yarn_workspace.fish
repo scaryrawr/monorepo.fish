@@ -1,6 +1,10 @@
 # Retrieves Yarn workspace package information.
 function _monorepo_search_yarn_workspace
-    set -l yarn_version (yarn --version)
+    set -l yarn_version (yarn --version 2>/dev/null)
+    if test $status -ne 0
+        echo "[]"
+        return
+    end
     # Check if we're using Yarn 1.x
     if string match -q "1.*" $yarn_version
         yarn --json workspaces info 2>/dev/null | jq -r '.data' | jq -r '
