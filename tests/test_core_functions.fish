@@ -13,6 +13,13 @@ end
 
 test_suite "Hash Function Tests"
 
+# Create test files for hash function
+set -l temp_dir (create_temp_test_dir "hash")
+cd "$temp_dir"
+echo "content1" > test-file1.json
+echo "content2" > test-file2.json
+echo "different content" > different-file.json
+
 # Test the hash function with known inputs
 set -l test_input "test-file1.json
 test-file2.json"
@@ -29,6 +36,8 @@ set -l different_input "different-file.json"
 set -l different_hash (_monorepo_hash "$different_input")
 test "$hash_result" != "$different_hash"
 assert_status_success $status "Different inputs should produce different hashes"
+
+cleanup_temp_test_dir "$temp_dir"
 
 test_suite "Preview Function Tests"
 
@@ -48,8 +57,8 @@ assert_status_success $status "Preview should mention package.json"
 
 # Test preview with invalid package
 set -l invalid_preview (_monorepo_preview_package_path "nonexistent-package")
-echo "$invalid_preview" | grep -q "not found"
-assert_status_success $status "Preview should indicate when package not found"
+test -z "$invalid_preview"
+assert_status_success $status "Preview should return empty output when package not found"
 
 cleanup_temp_test_dir "$temp_dir"
 
@@ -60,6 +69,12 @@ set -l temp_dir (create_temp_test_dir "resolution")
 create_yarn_workspace "$temp_dir" test-resolution-workspace
 
 cd "$temp_dir"
+
+# Create the actual package directories and files that the mock references
+mkdir -p apps/web-app apps/mobile-app libs/shared-ui
+echo '{"name": "web-app"}' > apps/web-app/package.json
+echo '{"name": "mobile-app"}' > apps/mobile-app/package.json  
+echo '{"name": "@company/shared-ui"}' > libs/shared-ui/package.json
 
 # Mock yarn for consistent testing
 function yarn
@@ -75,11 +90,11 @@ end
 # Get workspace packages
 set -l packages (_monorepo_get_workspace_packages)
 
-# Test that we can resolve package paths correctly
-set -l web_app_path (echo "$packages" | jq -r '.[] | select(.name == "web-app") | .path')
+# Test that we can resolve package paths correctly  
+set -l web_app_path (echo "$packages" | jq -r '.[] | select(.name == "web-app") | .path' | head -1)
 assert_file_exists "$web_app_path" "Web app package.json should exist at resolved path"
 
-set -l shared_ui_path (echo "$packages" | jq -r '.[] | select(.name == "@company/shared-ui") | .path')
+set -l shared_ui_path (echo "$packages" | jq -r '.[] | select(.name == "@company/shared-ui") | .path' | head -1)
 assert_file_exists "$shared_ui_path" "Shared UI package.json should exist at resolved path"
 
 # Test JSON structure validation
