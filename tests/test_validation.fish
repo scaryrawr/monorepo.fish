@@ -14,6 +14,13 @@ end
 
 test_suite "JSON Structure Validation"
 
+# Mock _fzf_preview_file for testing
+function _fzf_preview_file --description "Mock preview function for testing"
+    set -l file_path "$argv[1]"
+    echo "Preview of: $file_path"
+    echo "File contents would be displayed here"
+end
+
 # Test that our mocked functions produce valid JSON
 function mock_pnpm_output
     echo '[
