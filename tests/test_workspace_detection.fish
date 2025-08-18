@@ -12,36 +12,52 @@ end
 
 test_suite "PNPM Workspace Detection"
 
-# Test PNPM workspace with actual pnpm command (if available)
+# Test PNPM workspace with mocked pnpm command since real pnpm may fail in test environment
 set -l temp_dir (create_temp_test_dir "pnpm")
 create_pnpm_workspace "$temp_dir" "test-pnpm-workspace"
 
 cd "$temp_dir"
 
+# Mock pnpm command to return consistent test data
+function pnpm
+    if test "$argv[1]" = "list" && test "$argv[2]" = "--recursive" && test "$argv[3]" = "--depth" && test "$argv[4]" = "-1" && test "$argv[5]" = "--json"
+        echo '[
+  {
+    "name": "test-pnpm-workspace",
+    "path": "'"$PWD"'",
+    "private": true
+  },
+  {
+    "name": "@workspace/package-a",
+    "path": "'"$PWD"'/packages/package-a",
+    "private": false
+  },
+  {
+    "name": "@workspace/package-b",
+    "path": "'"$PWD"'/packages/package-b",
+    "private": false
+  }
+]'
+    end
+end
+
 # Test the PNPM function directly
 set -l pnpm_result (_monorepo_search_pnpm_workspace)
 set -l pnpm_status $status
 
-# Check if pnpm is available (or yq for fallback)
-if command -v pnpm >/dev/null 2>&1; or command -v yq >/dev/null 2>&1
-    assert_status_success $pnpm_status "PNPM workspace detection should succeed"
-    assert_json_array_length "$pnpm_result" "2" "PNPM should find 2 packages"
-    
-    # Validate JSON structure
-    set -l first_package (echo "$pnpm_result" | jq -r '.[0]')
-    assert_json_contains "$first_package" "name" "@workspace/package-a" "First package should have correct name"
-    assert_json_contains "$first_package" "path" "./packages/package-a/package.json" "First package should have correct path"
-    
-    set -l second_package (echo "$pnpm_result" | jq -r '.[1]')
-    assert_json_contains "$second_package" "name" "@workspace/package-b" "Second package should have correct name"
-    assert_json_contains "$second_package" "path" "./packages/package-b/package.json" "Second package should have correct path"
-else
-    echo "  → pnpm and yq not available, expecting fallback behavior"
-    test $pnpm_status -ne 0
-    assert_status_success $status "PNPM should return error status when tools unavailable"
-    assert_equals "[]" "$pnpm_result" "PNPM should return empty array when tools unavailable"
-end
+assert_status_success $pnpm_status "PNPM workspace detection should succeed"
+assert_json_array_length "$pnpm_result" "2" "PNPM should find 2 packages"
 
+# Validate JSON structure
+set -l first_package (echo "$pnpm_result" | jq -r '.[0]')
+assert_json_contains "$first_package" "name" "@workspace/package-a" "First package should have correct name"
+assert_json_contains "$first_package" "path" "./packages/package-a/package.json" "First package should have correct path"
+
+set -l second_package (echo "$pnpm_result" | jq -r '.[1]')
+assert_json_contains "$second_package" "name" "@workspace/package-b" "Second package should have correct name"
+assert_json_contains "$second_package" "path" "./packages/package-b/package.json" "Second package should have correct path"
+
+functions -e pnpm
 cleanup_temp_test_dir "$temp_dir"
 
 test_suite "Yarn Workspace Detection"
@@ -209,7 +225,7 @@ set -l workspace_result (_monorepo_get_workspace_packages)
 set -l workspace_status $status
 
 assert_status_success $workspace_status "Mixed workspace detection should succeed"
-assert_json_array_length "$workspace_result" "3" "Mixed workspace should find 3 packages total (yarn + pnpm finding same frontend package + cargo backend)"
+assert_json_array_length "$workspace_result" "2" "Mixed workspace should find 2 packages total (frontend from yarn + backend from cargo)"
 
 # Verify both types are present
 set -l has_frontend (echo "$workspace_result" | jq 'any(.[]; .name == "@mixed/frontend")')

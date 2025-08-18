@@ -41,15 +41,26 @@ cleanup_temp_test_dir "$temp_dir"
 
 test_suite "Preview Function Tests"
 
-# Create a test workspace
+# Create a test workspace  
 set -l temp_dir (create_temp_test_dir "preview")
-create_pnpm_workspace "$temp_dir" test-preview-workspace
+create_yarn_workspace "$temp_dir" test-preview-workspace
 
 cd "$temp_dir"
 
+# Mock yarn for consistent testing
+function yarn
+    if test "$argv[1]" = --version
+        echo "3.0.0"
+    else if test "$argv[1]" = workspaces && test "$argv[2]" = list && test "$argv[3]" = --json
+        echo '{"location":"apps/web-app","name":"web-app"}'
+        echo '{"location":"apps/mobile-app","name":"mobile-app"}'
+        echo '{"location":"libs/shared-ui","name":"@company/shared-ui"}'
+    end
+end
+
 # Test preview function with valid package
-set -l preview_result (_monorepo_preview_package_path "@workspace/package-a")
-echo "$preview_result" | grep -q package-a
+set -l preview_result (_monorepo_preview_package_path "web-app")
+echo "$preview_result" | grep -q web-app
 assert_status_success $status "Preview should contain package name"
 
 echo "$preview_result" | grep -q "package.json"
@@ -60,6 +71,7 @@ set -l invalid_preview (_monorepo_preview_package_path "nonexistent-package")
 test -z "$invalid_preview"
 assert_status_success $status "Preview should return empty output when package not found"
 
+functions -e yarn
 cleanup_temp_test_dir "$temp_dir"
 
 test_suite "Package Path Resolution Tests"
