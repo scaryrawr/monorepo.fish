@@ -1,6 +1,6 @@
 # Searches for Bun workspace packages and outputs name/path information.
 function _monorepo_search_bun_workspace
-    if test -f "./package.json"
+    if test -f "./package.json"; and test -f "./bun.lock"
         # Try object format first (bun workspaces), then array format
         set -l workspaces (jq -r '.workspaces.packages[]?' package.json 2>/dev/null)
         if test -z "$workspaces"
@@ -11,7 +11,7 @@ function _monorepo_search_bun_workspace
             for pattern in $workspaces
                 for pkg in (find . -path "./$pattern/package.json" -not -path "*/node_modules/*" -not -path "*/dist/*" -print 2>/dev/null)
                     set -l name (jq -r .name $pkg 2>/dev/null)
-                    if test -n "$name" -a "$name" != "null"
+                    if test -n "$name" -a "$name" != null
                         set -a packages_data (jq -n --arg name "$name" --arg path "$pkg" '{name: $name, path: $path}')
                     end
                 end
