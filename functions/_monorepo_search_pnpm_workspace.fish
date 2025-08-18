@@ -1,25 +1,24 @@
-# Searches for pnpm workspace packages and outputs name/path information.
 function _monorepo_search_pnpm_workspace
     if test -f "./pnpm-workspace.yaml"
-        if type -q pnpm
+        if command -v pnpm >/dev/null 2>&1
             # Try pnpm list first, with error handling for different pnpm versions
             set -l pnpm_output (pnpm list --recursive --depth -1 --json 2>/dev/null)
             if test $status -eq 0 && test -n "$pnpm_output"
                 # Handle both array and object formats that pnpm might return
-                echo "$pnpm_output" | jq -s '
-                    if type == "array" then 
-                        [.[] | {name: .name, path: (.path + "/package.json")}] 
-                    else 
-                        [. | {name: .name, path: (.path + "/package.json")}] 
-                    end' 2>/dev/null
-                if test $status -eq 0
-                    return 0
+                # First get the array, then process it
+                set -l pnpm_array (echo "$pnpm_output" | jq -s '.[0]' 2>/dev/null)
+                if test $status -eq 0 && test -n "$pnpm_array"
+                    set -l current_dir (realpath .)
+                    echo "$pnpm_array" | jq --arg pwd "$current_dir" '[.[] | select(.name != null and .name != "" and .path != $pwd) | {name: .name, path: (if .path | startswith($pwd) then "./" + (.path | ltrimstr($pwd + "/")) + "/package.json" else .path + "/package.json" end)}]' 2>/dev/null
+                    if test $status -eq 0
+                        return 0
+                    end
                 end
             end
         end
         
         # Fallback: parse pnpm-workspace.yaml and find all matching package.json files
-        if type -q yq
+        if command -v yq >/dev/null 2>&1
             set -l patterns (yq e '.packages[]' pnpm-workspace.yaml 2>/dev/null)
             set -l packages_data
             for pattern in $patterns
