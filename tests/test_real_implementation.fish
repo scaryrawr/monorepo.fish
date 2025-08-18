@@ -124,6 +124,9 @@ echo '{
   "workspaces": ["packages/*"]
 }' > package.json
 
+# Create bun.lock file (required for Bun workspace detection)
+echo '# Bun lockfile' > bun.lock
+
 mkdir -p packages/bun-pkg
 echo '{
   "name": "bun-package",
@@ -161,6 +164,9 @@ echo '{
   },
   "packageManager": "bun@1.2.14"
 }' > package.json
+
+# Create bun.lock file (required for Bun workspace detection)
+echo '# Bun lockfile' > bun.lock
 
 mkdir -p packages/pkg-one packages/pkg-two
 echo '{
