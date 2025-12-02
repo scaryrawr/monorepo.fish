@@ -7,7 +7,7 @@ function _monorepo_get_workspace_packages
 
     set -l cargo_packages '[]'
     if test -f "./Cargo.toml"
-        set -l cargo_packages (_monorepo_search_cargo_workspace)
+        set cargo_packages (_monorepo_search_cargo_workspace)
     end
 
     echo "$node_packages" "$cargo_packages" | jq -s '.[0] + .[1]'
