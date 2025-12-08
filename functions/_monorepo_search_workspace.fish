@@ -4,7 +4,11 @@ function _monorepo_search_workspace
         --with-nth=1 \
         --multi \
         --ansi \
-        --preview='_monorepo_preview_package_path (string split \t {} -f1) (string split \t {} -f2)'
+        --preview='_monorepo_preview_package_path {1} {2}'
+
+    if test -n "$EDITOR"
+        set --append fzf_arguments --bind="ctrl-o:execute($EDITOR {2})"
+    end
 
     set -f token (commandline --current-token)
 
