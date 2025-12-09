@@ -18,7 +18,7 @@ function _monorepo_search_workspace
 
     set --prepend fzf_arguments --prompt="Workspace> "
 
-    set -f packages_selected (_monorepo_get_workspace_packages "$packages" | _fzf_wrapper $fzf_arguments | string split \t -f1)
+    set -f packages_selected (_monorepo_get_workspace_packages | _fzf_wrapper $fzf_arguments | string split \t -f1)
     if test $status -eq 0
         commandline --current-token --replace -- (string escape -- $packages_selected | string join ' ')
     end
